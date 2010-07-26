@@ -1,0 +1,7 @@
+{%for image in images %}
+
+<h2>{{image.name}} ({{image.size}}px)</h2>
+
+<p><img src="/img/{{image.filename}}?img_id={{img_id}}&type={{image.type}}" alt="{{image.name}}" width="{{image.size}}" height="{{image.size}}"/></p>
+
+{%endfor %}

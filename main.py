@@ -1,7 +1,9 @@
 import cgi
 import datetime
 import logging
+import os
 
+from google.appengine.ext.webapp import template
 from google.appengine.ext import db
 from google.appengine.api import users
 from google.appengine.ext import webapp
@@ -52,41 +54,49 @@ class Image (webapp.RequestHandler):
 
 
 
-class Guestbook(webapp.RequestHandler):
+class Generate(webapp.RequestHandler):
     
     def resize(self, w, h):
-        return images.resize(self.request.get("img"), w, h)
+        return None#return images.resize(self.request.get("img"), w, h)
     
     def post(self):
-        g = Greeting()
-        g.iphone4_app = db.Blob(self.resize(114,114))
-        g.iphone_app = db.Blob(self.resize(57,57))
-        g.ipad_app = db.Blob(self.resize(72,72))
-        g.iphone4_spot = db.Blob(self.resize(58,58))
-        g.iphone_spot = db.Blob(self.resize(50,50))
-        g.ipad_spot = db.Blob(self.resize(29,29))
-        g.appstore = db.Blob(self.request.get("img"))
-        g.put()
-        
-        icon_types = {
-            'iphone4_app' : 'iPhone 4 Appstore Icon',
-            'iphone_app' : 'iPhone Appstore Icon',
-            'ipad_app' : 'iPad Appstore Icon',
-            'iphone4_spot' : 'iPhone 4 Spotlight',
-            'iphone_spot' : 'iPhone Spotlight',
-            'ipad_spot' : 'iPad Spotlight',
-            'appstore' : 'Original' }
-        
-        for k in icon_types.keys():
-            self.response.out.write("<h2>%s</h2><img src='img?img_id=%s&type=%s'/>" % (icon_types[k], g.key(), k))
 
+        icon_types = [
+            {'type':'iphone_app' 	,'name':'iPhone'		,'size':57	,'filename':'icon.png'},
+            {'type':'iphone4_app' 	,'name':'iPhone 4'		,'size':114	,'filename':'icon@2x.png'},
+            {'type':'ipad_app' 		,'name':'iPad'			,'size':72	,'filename':'icon-72.png'},
+            {'type':'iphone_spot' 	,'name':'Spotlight iPhone'	,'size':29	,'filename':'spotlight.png'},
+            {'type':'iphone4_spot' 	,'name':'Spotlight iPhone 4'	,'size':58	,'filename':'spotlight@2x.png'},
+            {'type':'ipad_spot' 	,'name':'Spotlight iPad'	,'size':50	,'filename':'spotlight-ipad.png'},
+            {'type':'appstore' 		,'name':'Original' 		,'size':512	,'filename':'original.png'},
+	 ]
+
+
+
+        g = Greeting()
+	g.put()     
+       
+	images = []
+	for genre in icon_types:
+		img = self.request.get("img")
+		size = genre['size']		
+		if (size<512):
+			try:
+				img = db.Blob(self.resize(size,size))
+			except Exception:
+				pass
+		setattr(g,genre['type'],img)
+		images.append(genre)
+	g.put()	
+	path = os.path.join(os.path.dirname(__file__), 'templates','generate.html')
+	self.response.out.write(template.render(path, {"images":images, "img_id":g.key()}))
 
 
 
 application = webapp.WSGIApplication([
     ('/', MainPage)
-    ,('/img', Image)
-    ,('/generate', Guestbook)
+    ,('/img/.*', Image)
+    ,('/generate', Generate)
 ], debug=True)
 
 
