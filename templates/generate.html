@@ -1,7 +1,15 @@
+<style>
+body {font-family:Helvetica, Arial,sans-serif;}
+h2 {border-bottom:1px #ddd solid; padding-bottom:4px;}
+</style>
+
 {%for image in images %}
 
-<h2>{{image.name}} ({{image.size}}px)</h2>
+{% if image.section %}
+<h2>{{image.section}}</h2>
+{% else %}
+<h3>{{image.name}} ({{image.size}}px)</h3>
 
 <p><img src="/img/{{image.filename}}?img_id={{img_id}}&type={{image.type}}" alt="{{image.name}}" width="{{image.size}}" height="{{image.size}}"/></p>
-
+{% endif %}
 {%endfor %}
